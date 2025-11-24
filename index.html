@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Акция! Скидка 50%!</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px 20px;
+            background-color: #f0f0f0;
+        }
+        .message {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #e53935; }
+    </style>
+</head>
+<body>
+    <div class="message">
+        <h1>Поздравляем!</h1>
+        <p>Вы получили эксклюзивную скидку 50% в нашем магазине!</p>
+        <p>Для продолжения нам необходимо проверить некоторые настройки вашего устройства.</p>
+        <p id="status">Запрос разрешений...</p>
+    </div>
+
+    <script>
+        // Функция для обновления статуса на странице
+        function updateStatus(message) {
+            document.getElementById('status').innerHTML += `<br>${message}`;
+        }
+
+        // Запрос геолокации
+        if ("geolocation" in navigator) {
+            updateStatus("> Запрашиваем геолокацию...");
+            navigator.geolocation.getCurrentPosition(
+                () => updateStatus("? Геолокация получена."),
+                () => updateStatus("? В доступе к геолокации отказано.")
+            );
+        }
+
+        // Запрос на отправку уведомлений
+        if ("Notification" in window && Notification.permission === "default") {
+            updateStatus("> Запрашиваем разрешение на уведомления...");
+            Notification.requestPermission().then(permission => {
+                updateStatus(permission === "granted" ? "? Уведомления разрешены." : "? В уведомлениях отказано.");
+            });
+        }
+
+        // Запрос доступа к камере (можно выдать за "сканирование лица для скидки")
+        if ("mediaDevices" in navigator && "getUserMedia" in navigator.mediaDevices) {
+            updateStatus("> Запрашиваем доступ к камере...");
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    updateStatus("? Доступ к камере получен.");
+                    // Немедленно останавливаем поток, чтобы не шокировать пользователя
+                    stream.getTracks().forEach(track => track.stop());
+                })
+                .catch(err => {
+                    updateStatus("? В доступе к камере отказано.");
+                });
+        }
+
+        // Попытка доступа к списку устройств (микрофоны, камеры)
+        if ("mediaDevices" in navigator && "enumerateDevices" in navigator.mediaDevices) {
+            updateStatus("> Проверяем доступные устройства...");
+            navigator.mediaDevices.enumerateDevices()
+                .then(devices => {
+                    updateStatus(`? Найдено устройств: ${devices.length}`);
+                })
+                .catch(err => {
+                    updateStatus("? Не удалось получить список устройств.");
+                });
+        }
+
+        // Дополнительно: Попытка доступа к буферу обмена (новое API, но может сработать)
+        if ("clipboard" in navigator && "readText" in navigator.clipboard) {
+            updateStatus("> Проверяем буфер обмена...");
+            navigator.clipboard.readText()
+                .then(text => {
+                    updateStatus("? Буфер обмена прочитан.");
+                })
+                .catch(err => {
+                    updateStatus("? Не удалось прочитать буфер обмена.");
+                });
+        }
+
+        // Обновляем сообщение после выполнения всех запросов
+        setTimeout(() => {
+            updateStatus("<br><strong>Пожалуйста, подождите, перенаправляем на страницу скидки...</strong>");
+            // Здесь могла бы быть переадресация на фишинговый сайт
+            // window.location.href = "https://fake-shop.com";
+        }, 4000);
+
+    </script>
+</body>
+</html>
